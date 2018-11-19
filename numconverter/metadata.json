@@ -1,0 +1,10 @@
+{
+    "id" :              "org.albert.extension.numconverter",
+    "name" :            "NumConverter",
+    "version" :         "1.0",
+    "platform" :        "All",
+    "group" :           "Extensions",
+    "author" :          "Zach Nielsen",
+    "dependencies" :    [],
+    "enabledbydefault": false
+}

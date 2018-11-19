@@ -61,6 +61,11 @@ if (BUILD_HASHGENERATOR)
     add_subdirectory(hashgenerator)
 endif()
 
+option(BUILD_NUMCONVERTER "Build the extension" ON)
+if (BUILD_NUMCONVERTER)
+    add_subdirectory(numconverter)
+endif()
+
 option(BUILD_MPRIS "Build the extension" ON)
 if (BUILD_MPRIS)
     add_subdirectory(mpris)
