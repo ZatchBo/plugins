@@ -6,7 +6,7 @@
 #include "core/extension.h"
 #include "core/queryhandler.h"
 
-namespace ProjectNamespace {
+namespace NumConverter {
 
 class Private;
 
@@ -22,10 +22,9 @@ public:
     Extension();
     ~Extension();
 
-    QString name() const override { return "Template"; }
+    QString name() const override { return "Number Converter"; }
     QWidget *widget(QWidget *parent = nullptr) override;
-    void setupSession() override;
-    void teardownSession() override;
+    QStringList triggers() const override;
     void handleQuery(Core::Query * query) const override;
 
 private:

@@ -1,6 +1,6 @@
 {
     "id" :              "org.albert.extension.numconverter",
-    "name" :            "NumConverter",
+    "name" :            "Number Converter",
     "version" :         "1.0",
     "platform" :        "All",
     "group" :           "Extensions",

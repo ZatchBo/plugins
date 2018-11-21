@@ -6,13 +6,13 @@ import sys
 import string
 from shutil import copyfile
 
-ID_KEYWORD = "projectid"
-NAMESPACE_KEYWORD = "ProjectNamespace"
-PRETTYNAME_KEYWORD = "Template"
+ID_KEYWORD = "numconverter"
+NAMESPACE_KEYWORD = "NumConverter"
+PRETTYNAME_KEYWORD = "Number Converter"
 ID_PATTERN = "^([a-z0-9]+)$"
 NAMESPACE_PATTERN = "^([A-Za-z][A-Za-z0-9]+)$"
 PRETTYNAME_PATTERN = "^([A-Za-z0-9 _\\-]+)$"
-TEMPLATE_EXTENSION_BASE = "templateExtension/"
+TEMPLATE_EXTENSION_BASE = "numconverter/"
 CMAKE_PATTERN = "^add_subdirectory\(([^\)]+)\)$"
 
 if len(sys.argv) != 4:
@@ -82,8 +82,8 @@ for localFile in filesToPrepare:
         tmpfile = localFile + ".tmp"
         tmp = open(tmpfile, "w")
         for line in fd:
-            tmp.write(re.sub(ID_KEYWORD, id_string, 
-                    re.sub(NAMESPACE_KEYWORD, namespace_string, 
+            tmp.write(re.sub(ID_KEYWORD, id_string,
+                    re.sub(NAMESPACE_KEYWORD, namespace_string,
                             re.sub(PRETTYNAME_KEYWORD, prettyname_string, line))))
         tmp.close()
         os.rename(tmpfile, localFile)
@@ -104,7 +104,7 @@ with open("CMakeLists.txt", "r") as makelist:
             existingExtensions.append(match.group(1))
         else:
             postSubdir = not preSubdir
-        
+
         if preSubdir:
             preLines.append(line)
         elif postSubdir:

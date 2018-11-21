@@ -1,6 +1,5 @@
-// Copyright (C) 2014-2017 Manuel Schneider
-
 #include <QDebug>
+#include <QClipboard>
 #include <QPointer>
 #include <stdexcept>
 #include "util/standarditem.h"
@@ -10,7 +9,24 @@
 using namespace Core;
 using namespace std;
 
-class ProjectNamespace::Private
+
+namespace {
+    const QStringList numberBases = {
+        "b",
+        "o",
+        "d",
+        "h",
+    };
+    const QStringList baseName = {
+        "bin",
+        "oct",
+        "dec",
+        "hex",
+    };
+}
+
+
+class NumConverter::Private
 {
 public:
     QPointer<ConfigWidget> widget;
@@ -18,99 +34,118 @@ public:
 
 
 /** ***************************************************************************/
-ProjectNamespace::Extension::Extension()
-    : Core::Extension("org.albert.extension.projectid"), // Must match the id in metadata
+NumConverter::Extension::Extension()
+    : Core::Extension("org.albert.extension.numconverter"), // Must match the id in metadata
       Core::QueryHandler(Core::Plugin::id()),
       d(new Private) {
 
     registerQueryHandler(this);
-
-    // You can throw in the constructor if something fatal happened
-    throw std::runtime_error( "Description of error." );
-    throw std::string( "Description of error." );
-    throw QString( "Description of error." );
-    throw "Description of error.";
-    throw; // Whatever prints "unknown error"
 }
 
 
 
 /** ***************************************************************************/
-ProjectNamespace::Extension::~Extension() {
+NumConverter::Extension::~Extension() {
 
 }
 
 
 
 /** ***************************************************************************/
-QWidget *ProjectNamespace::Extension::widget(QWidget *parent) {
+QWidget *NumConverter::Extension::widget(QWidget *parent) {
     if (d->widget.isNull()) {
         d->widget = new ConfigWidget(parent);
     }
     return d->widget;
 }
 
-
+/** ***************************************************************************/
+QStringList NumConverter::Extension::triggers() const {
+    return {
+        "h ",
+        "o ",
+        "d ",
+        "b ",
+    };
+}
 
 /** ***************************************************************************/
-void ProjectNamespace::Extension::setupSession() {
+void NumConverter::Extension::setupSession() {
 
 }
 
 
 
 /** ***************************************************************************/
-void ProjectNamespace::Extension::teardownSession() {
+void NumConverter::Extension::teardownSession() {
 
 }
 
 
 
 /** ***************************************************************************/
-void ProjectNamespace::Extension::handleQuery(Core::Query *) const {
+void NumConverter::Extension::handleQuery(Core::Query *) const {
 
-    /*
-     * Things change so often I wont maintain this tutorial here. Check the relevant headers.
-     *
-     * - core/extension.h
-     * - core/queryhandler.h
-     * - core/query.h
-     * - core/item.h
-     * - core/action.h
-     * - util/standarditem.h
-     * - util/offlineindex.h
-     * - util/standardindexitem.h
-     *
-     * Use
-     *
-     *   query->addMatch(my_item)
-     *
-     * to add matches. If you created a throw away item MOVE it instead of
-     * copying e.g.:
-     *
-     *   query->addMatch(std::move(my_tmp_item))
-     *
-     * The relevance factor is optional. (Defaults to 0) its a usigned integer depicting the
-     * relevance of the item 0 mean not relevant UINT_MAX is totally relevant (exact match).
-     * E.g. it the query is "it" and your items name is "item"
-     *
-     *   my_item.name().startswith(query->string)
-     *
-     * is a naive match criterion and
-     *
-     *   UINT_MAX / ( query.searchterm().size() / my_item.name().size() )
-     *
-     * a naive match factor.
-     *
-     * If you have a lot of items use the iterator versions addMatches, e.g. like that
-     *
-     *   query->addMatches(my_items.begin(), my_items.end());
-     *
-     * If the items in the container are temporary object move them to avoid uneccesary
-     * reference counting:
-     *
-     *   query->addMatches(std::make_move_iterator(my_tmp_items.begin()),
-     *                     std::make_move_iterator(my_tmp_items.end()));
-     */
+    auto buildItem = [](int base, QString str_num){
+
+        stringstream converted_numbers[4];
+
+        switch ( numberBases[base] ) {
+            case "b": {
+                auto int_num = stoul(str_num, NULL, 2);
+                break;
+            }
+            case "o": {
+                auto int_num = stoul(str_num, NULL, 8);
+                break;
+            }
+            case "d": {
+                auto int_num = stoul(str_num, NULL, 10);
+                break;
+            }
+            case "h": {
+                auto int_num = stoul(str_num, NULL, 16);
+                break;
+            }
+        }
+
+        string bin_string;
+        if ( numberBases[base] != "b" ) {
+            // Make the binary string
+            int bits = ( (sizeof(int_num)*8)-1 );
+            for (int i=bits; i>=0; i--) {
+                if ( (int_num >> i) & 1) == 1 ) {
+                    bin_string.append("1");
+                }
+                else {
+                    bin_string.append("0");
+                }
+            }
+        }
+        else {
+            bin_string = str_num;
+        }
+
+
+        converted_numbers[0].write(bin_string);
+        converted_numbers[1] << oct << int_num;
+        converted_numbers[2] << dec << int_num;
+        converted_numbers[3] << hex << int_num;
+
+        auto item = make_shared<StandardItem>(numberBases[base]);
+        item->setSubtext(QString("%1 as %2").arg(string, baseName[base]));
+        item->setText(converted_numbers[base]);
+        item->setIconPath(":hash");
+        item->setCompletion(QString("%1 %2").arg(numberBases[base].toLower(), string));
+        item->addAction(make_shared<ClipAction>("Copy hash value to clipboard",
+                            QString(converted_numbers[base])));
+        return item;
+    };
+
+    auto requestedBase = find(numberBases.begin(), numberBases.end(),
+                            query->trigger().trimmed().toLower());
+    if ( requestedBase != numberBases.end()) {
+        int base = static_cast<int>(distance(numberBases.begin(), requestedBase));
+        query->addMatch(buildItem(base, query->string()));
+    }
 }
-
